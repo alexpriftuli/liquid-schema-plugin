@@ -51,12 +51,26 @@ module.exports = class LiquidSchemaPlugin {
                     );
 
                     try {
-                        // eslint-disable-next-line no-param-reassign
-                        compilation.assets[
-                            outputKey
-                        ] = await this.replaceSchemaTags(
+                        let outputFile = await this.replaceSchemaTags(
                             fileLocation,
                             compilation
+                        );
+
+                        const duplicateRules = this.constructor.getDuplicateRules(
+                            outputFile._value
+                        );
+
+                        outputFile = await this.constructor.cleanDupicateTag(
+                            outputFile
+                        );
+
+                        // eslint-disable-next-line no-param-reassign
+                        compilation.assets[outputKey] = outputFile;
+
+                        await this.constructor.duplicatedFiles(
+                            compilationOutput,
+                            outputKey,
+                            duplicateRules
                         );
                     } catch (error) {
                         compilation.errors.push(
@@ -160,5 +174,36 @@ module.exports = class LiquidSchemaPlugin {
                 ])
             )
         );
+    }
+
+    static async duplicatedFiles(filePath, fileName, duplicateRules) {
+        const file = `${filePath}/${fileName}`;
+
+        if (duplicateRules) {
+            duplicateRules.forEach(newFileName => {
+                const newFile = `${filePath}/${newFileName}.liquid`;
+                fs.copyFile(file, newFile, err => {
+                    if (err) throw err;
+                });
+            });
+        }
+    }
+
+    static async cleanDupicateTag(fileContents) {
+        const replaceableSchemaRegex = /{%-?\s*duplicate\s*-?%}(([\s\S]*)){%-?\s*endduplicate\s*-?%}\n\n/;
+        return new RawSource(
+            fileContents._value.replace(replaceableSchemaRegex, '')
+        );
+    }
+
+    static getDuplicateRules(fileContents) {
+        const replaceableSchemaRegex = /{%-?\s*duplicate\s*-?%}(([\s\S]*)){%-?\s*endduplicate\s*-?%}/;
+        const match = fileContents.match(replaceableSchemaRegex);
+
+        if (match && match[1] !== '') {
+            return JSON.parse(match[1]);
+        }
+
+        return '';
     }
 };
