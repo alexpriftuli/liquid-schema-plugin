@@ -68,7 +68,7 @@ module.exports = class LiquidSchemaPlugin {
                         compilation.assets[outputKey] = outputFile;
 
                         await this.constructor.duplicatedFiles(
-                            compilationOutput,
+                            this.options.to,
                             outputKey,
                             duplicateRules
                         );
