@@ -70,7 +70,8 @@ module.exports = class LiquidSchemaPlugin {
                             compilation.assets = await this.duplicatedFiles(
                                 compilationOutput,
                                 duplicateRules,
-                                outputFile
+                                outputFile,
+                                compilation.assets
                             );
                         } else {
                             // eslint-disable-next-line no-param-reassign
@@ -185,20 +186,24 @@ module.exports = class LiquidSchemaPlugin {
         );
     }
 
-    async duplicatedFiles(fileLocation, duplicateRules, fileContent) {
-        const filesArray = [];
-
+    async duplicatedFiles(
+        fileLocation,
+        duplicateRules,
+        fileContent,
+        assetList
+    ) {
         if (duplicateRules) {
             duplicateRules.forEach(newFileName => {
                 const outputKey = this.getOutputKeyByFileName(
                     `${newFileName}.liquid`,
                     fileLocation
                 );
-                filesArray[outputKey] = fileContent;
+                // eslint-disable-next-line no-param-reassign
+                assetList[outputKey] = fileContent;
             });
         }
 
-        return filesArray;
+        return assetList;
     }
 
     static async cleanDupicateTag(fileContents) {
