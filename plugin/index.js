@@ -66,8 +66,6 @@ module.exports = class LiquidSchemaPlugin {
                             duplicateRules,
                             outputFile
                         );
-
-                        console.log(compilation.assets);
                     } catch (error) {
                         compilation.errors.push(
                             new Error(`./${relativeFilePath}\n\n${error}`)
