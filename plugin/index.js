@@ -68,7 +68,7 @@ module.exports = class LiquidSchemaPlugin {
 
                             // eslint-disable-next-line no-param-reassign
                             compilation.assets = await this.duplicatedFiles(
-                                fileLocation,
+                                compilationOutput,
                                 duplicateRules,
                                 outputFile
                             );
@@ -190,8 +190,11 @@ module.exports = class LiquidSchemaPlugin {
 
         if (duplicateRules) {
             duplicateRules.forEach(newFileName => {
-                const outputKey = this.getOutputKeyByFileName(newFileName, fileLocation);
-                filesArray[`${outputKey}.liquid`] = fileContent;
+                const outputKey = this.getOutputKeyByFileName(
+                    `${newFileName}.liquid`,
+                    fileLocation
+                );
+                filesArray[outputKey] = fileContent;
             });
         }
 
