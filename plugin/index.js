@@ -45,6 +45,11 @@ module.exports = class LiquidSchemaPlugin {
                         fileLocation
                     );
 
+                    const outputKey = this.getOutputKey(
+                        fileLocation,
+                        compilationOutput
+                    );
+
                     try {
                         let outputFile = await this.replaceSchemaTags(
                             fileLocation,
@@ -56,16 +61,21 @@ module.exports = class LiquidSchemaPlugin {
                             outputFile._value
                         );
 
-                        outputFile = await this.constructor.cleanDupicateTag(
-                            outputFile
-                        );
+                        if (duplicateRules) {
+                            outputFile = await this.constructor.cleanDupicateTag(
+                                outputFile
+                            );
 
-                        // eslint-disable-next-line no-param-reassign
-                        compilation.assets = await this.duplicatedFiles(
-                            fileLocation,
-                            duplicateRules,
-                            outputFile
-                        );
+                            // eslint-disable-next-line no-param-reassign
+                            compilation.assets = await this.duplicatedFiles(
+                                fileLocation,
+                                duplicateRules,
+                                outputFile
+                            );
+                        } else {
+                            // eslint-disable-next-line no-param-reassign
+                            compilation.assets[outputKey] = outputFile;
+                        }
                     } catch (error) {
                         compilation.errors.push(
                             new Error(`./${relativeFilePath}\n\n${error}`)
@@ -85,7 +95,16 @@ module.exports = class LiquidSchemaPlugin {
         });
     }
 
-    getOutputKey(fileName, compilationOutput) {
+    getOutputKey(liquidSourcePath, compilationOutput) {
+        const fileName = path.relative(
+            this.options.from.liquid,
+            liquidSourcePath
+        );
+
+        return this.getOutputKeyByFileName(fileName, compilationOutput);
+    }
+
+    getOutputKeyByFileName(fileName, compilationOutput) {
         const relativeOutputPath = path.relative(
             compilationOutput,
             this.options.to
@@ -171,7 +190,7 @@ module.exports = class LiquidSchemaPlugin {
 
         if (duplicateRules) {
             duplicateRules.forEach(newFileName => {
-                const outputKey = this.getOutputKey(newFileName, fileLocation);
+                const outputKey = this.getOutputKeyByFileName(newFileName, fileLocation);
                 filesArray[`${outputKey}.liquid`] = fileContent;
             });
         }
