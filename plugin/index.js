@@ -45,11 +45,6 @@ module.exports = class LiquidSchemaPlugin {
                         fileLocation
                     );
 
-                    const outputKey = this.getOutputKey(
-                        fileLocation,
-                        compilationOutput
-                    );
-
                     try {
                         let outputFile = await this.replaceSchemaTags(
                             fileLocation,
@@ -57,6 +52,7 @@ module.exports = class LiquidSchemaPlugin {
                         );
 
                         const duplicateRules = this.constructor.getDuplicateRules(
+                            // eslint-disable-next-line no-underscore-dangle
                             outputFile._value
                         );
 
@@ -65,13 +61,13 @@ module.exports = class LiquidSchemaPlugin {
                         );
 
                         // eslint-disable-next-line no-param-reassign
-                        compilation.assets[outputKey] = outputFile;
-
-                        await this.constructor.duplicatedFiles(
-                            this.options.to,
-                            outputKey,
-                            duplicateRules
+                        compilation.assets = await this.duplicatedFiles(
+                            fileLocation,
+                            duplicateRules,
+                            outputFile
                         );
+
+                        console.log(compilation.assets);
                     } catch (error) {
                         compilation.errors.push(
                             new Error(`./${relativeFilePath}\n\n${error}`)
@@ -91,11 +87,7 @@ module.exports = class LiquidSchemaPlugin {
         });
     }
 
-    getOutputKey(liquidSourcePath, compilationOutput) {
-        const fileName = path.relative(
-            this.options.from.liquid,
-            liquidSourcePath
-        );
+    getOutputKey(fileName, compilationOutput) {
         const relativeOutputPath = path.relative(
             compilationOutput,
             this.options.to
@@ -176,22 +168,23 @@ module.exports = class LiquidSchemaPlugin {
         );
     }
 
-    static async duplicatedFiles(filePath, fileName, duplicateRules) {
-        const file = `${filePath}/${fileName}`;
+    async duplicatedFiles(fileLocation, duplicateRules, fileContent) {
+        const filesArray = [];
 
         if (duplicateRules) {
             duplicateRules.forEach(newFileName => {
-                const newFile = `${filePath}/${newFileName}.liquid`;
-                fs.copyFile(file, newFile, err => {
-                    if (err) throw err;
-                });
+                const outputKey = this.getOutputKey(newFileName, fileLocation);
+                filesArray[`${outputKey}.liquid`] = fileContent;
             });
         }
+
+        return filesArray;
     }
 
     static async cleanDupicateTag(fileContents) {
         const replaceableSchemaRegex = /{%-?\s*duplicate\s*-?%}(([\s\S]*)){%-?\s*endduplicate\s*-?%}\n\n/;
         return new RawSource(
+            // eslint-disable-next-line no-underscore-dangle
             fileContents._value.replace(replaceableSchemaRegex, '')
         );
     }
