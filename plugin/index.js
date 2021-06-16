@@ -198,8 +198,13 @@ module.exports = class LiquidSchemaPlugin {
                     `${newFileName}.liquid`,
                     fileLocation
                 );
+
                 // eslint-disable-next-line no-param-reassign
-                assetList[outputKey] = fileContent;
+                assetList[outputKey] = new RawSource(
+                    // eslint-disable-next-line no-underscore-dangle
+                    fileContent._value.replace("-{{title_section}}-", newFileName)
+                );
+;
             });
         }
 
