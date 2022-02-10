@@ -32,7 +32,7 @@
   "devDependencies": {
     "@strawberrydigital/eslint-config": "^1.0.0",
     "eslint": "^7.4.0",
-    "jest": "^25.1.0",
+    "jest": "^27.5.1",
     "webpack-cli": "^4.4.0"
   },
   "scripts": {
